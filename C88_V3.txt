@@ -1,0 +1,260 @@
+Step 1
+
+In createstory.js 
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+  Image,
+  ScrollView,
+  TextInput,
+  Dimensions,
+  Button,
+  Alert
+} from "react-native";
+
+<View style={styles.submitButton}>
+                <Button
+                  onPress={() => this.addStory()}
+                  title="Submit"
+                  color="#841584"
+                />
+              </View>
+
+
+
+ async addStory() {
+    if (
+      this.state.title &&
+      this.state.description &&
+      this.state.story &&
+      this.state.moral
+    ) {
+      let storyData = {
+        preview_image: this.state.previewImage,
+        title: this.state.title,
+        description: this.state.description,
+        story: this.state.story,
+        moral: this.state.moral,
+        author: firebase.auth().currentUser.displayName,
+        created_on: new Date(),
+        author_uid: firebase.auth().currentUser.uid,
+        likes: 0
+      };
+      await firebase
+        .database()
+        .ref(
+          "/posts/" +
+            Math.random()
+              .toString(36)
+              .slice(2)
+        )
+        .set(storyData)
+        .then(function(snapshot) {});
+      this.props.setUpdateToTrue();
+      this.props.navigation.navigate("Feed");
+    } else {
+      Alert.alert(
+        "Error",
+        "All fields are required!",
+        [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+        { cancelable: false }
+      );
+    }
+  }
+-------------------------------------------------
+step 2
+ IN Feed.js
+
+constructor(props) {
+    super(props);
+    this.state = {
+      fontsLoaded: false,
+      light_theme: true,
+      stories: []
+    };
+  }
+
+ fetchStories = () => {
+    firebase
+      .database()
+      .ref("/posts/")
+      .on(
+        "value",
+        snapshot => {
+          let stories = [];
+          if (snapshot.val()) {
+            Object.keys(snapshot.val()).forEach(function (key) {
+              stories.push({
+                key: key,
+                value: snapshot.val()[key]
+              });
+            });
+          }
+          this.setState({ stories: stories });
+          this.props.setUpdateToFalse();
+        },
+        function (errorObject) {
+          console.log("The read failed: " + errorObject.code);
+        }
+      );
+  };
+
+
+
+  componentDidMount() {
+    this._loadFontsAsync();
+    this.fetchStories();
+    this.fetchUser();
+  }
+------------------------------------------
+step 3
+
+ return (
+        <View
+          style={
+            this.state.light_theme ? styles.containerLight : styles.container
+          }
+        >
+          <SafeAreaView style={styles.droidSafeArea} />
+          <View style={styles.appTitle}>
+            <View style={styles.appIcon}>
+              <Image
+                source={require("../assets/logo.png")}
+                style={styles.iconImage}
+              ></Image>
+            </View>
+            <View style={styles.appTitleTextContainer}>
+              <Text
+                style={
+                  this.state.light_theme
+                    ? styles.appTitleTextLight
+                    : styles.appTitleText
+                }
+              >
+                Storytelling App
+              </Text>
+            </View>
+          </View>
+          {!this.state.stories[0] ? (
+            <View style={styles.noStories}>
+              <Text
+                style={
+                  this.state.light_theme
+                    ? styles.noStoriesTextLight
+                    : styles.noStoriesText
+                }
+              >
+                No Stories Available
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.cardContainer}>
+              <FlatList
+                keyExtractor={this.keyExtractor}
+                data={this.state.stories}
+                renderItem={this.renderItem}
+              />
+            </View>
+          )}
+          <View style={{ flex: 0.08 }} />
+        </View>
+      );
+----------------------------------------
+  noStories: {
+    flex: 0.85,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  noStoriesTextLight: {
+    fontSize: RFValue(40),
+    fontFamily: "Bubblegum-Sans"
+  },
+  noStoriesText: {
+    color: "white",
+    fontSize: RFValue(40),
+    fontFamily: "Bubblegum-Sans"
+  }
+-------------------------------------
+step 3
+
+in StoryCard.js
+
+ constructor(props) {
+    super(props);
+    this.state = {
+      fontsLoaded: false,
+      light_theme: true,
+      story_id: this.props.story.key,
+      story_data: this.props.story.value
+    };
+  }
+
+in render()
+
+
+ let story = this.state.story_data;
+    if (!this.state.fontsLoaded) {
+      return <AppLoading />;
+    }else {
+      let images = {
+        image_1: require("../assets/story_image_1.png"),
+        image_2: require("../assets/story_image_2.png"),
+        image_3: require("../assets/story_image_3.png"),
+        image_4: require("../assets/story_image_4.png"),
+        image_5: require("../assets/story_image_5.png")
+      };
+------------------------------------------
+<Image
+              source={images[story.preview_image]}
+              style={styles.storyImage}
+            ></Image>
+---------------------------------
+in tabnavigator.js
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      light_theme: true,
+      isUpdated: false
+    };
+  }
+
+  changeUpdated = () => {
+    this.setState({ isUpdated: true });
+  };
+
+  removeUpdated = () => {
+    this.setState({ isUpdated: false });
+  };
+
+ <Tab.Screen
+          name="Feed"
+          component={this.renderFeed}
+          options={{ unmountOnBlur: true }}
+        />
+  <Tab.Screen
+          name="Create Story"
+          component={this.renderStory}
+          options={{ unmountOnBlur: true }}
+        />
+
+
+renderFeed = props => {
+    return <Feed setUpdateToFalse={this.removeUpdated} {...props} />;
+  };
+
+  renderStory = props => {
+    return <CreateStory setUpdateToTrue={this.changeUpdated} {...props} />;
+  };
+----------------------------------------
+In CreateStory.js
+
+
+
+
+
